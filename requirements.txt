@@ -1,0 +1,2 @@
+eth2spec==0.12.1
+remerkleable==0.1.16
