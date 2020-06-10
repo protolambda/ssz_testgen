@@ -81,23 +81,255 @@ def general_edge_case(tags: Set[str]):
     return edge_case(applicable_fn=lambda t: True, tags=tags)
 
 
-@general_edge_case({'zero'})
-def zero_bytes(ann: Annotator, typ: Type[View], rng: Random, ee: EdgeCaseEncoder) -> bytes:
-    default_value = typ.default(hook=None)  # Fully zeroed/empty everything (except necessary offsets etc.)
-    return default_value.encode_bytes()
-
-
-@general_edge_case({'empty'})
-def empty_bytes(ann: Annotator, typ: Type[View], rng: Random, ee: EdgeCaseEncoder) -> bytes:
-    return b""
-
-
 def fixedlen_or_offsetlen(x: Type[View]) -> int:
     return x.type_byte_length() if x.is_fixed_byte_length() else OFFSET_BYTE_LENGTH
 
 
 def encode_offset(offset: int) -> bytes:
     return uint32(offset).encode_bytes()
+
+
+########################################################################################################################
+
+
+@general_edge_case({'default'})
+def default_value(ann: Annotator, typ: Type[View], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    default_value = typ.default(hook=None)  # Fully zeroed/empty everything (except necessary offsets etc.)
+    return default_value.encode_bytes()
+
+
+########################################################################################################################
+
+
+@type_edge_case(ByteList, {'random'})
+def random_byte_list(ann: Annotator, typ: Type[ByteList], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(ByteList, {'min', 'zero'})
+def zero_byte_list(ann: Annotator, typ: Type[ByteList], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(ByteList, {'max'})
+def max_byte_list(ann: Annotator, typ: Type[ByteList], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(ByteList, {'full'})
+def full_byte_list(ann: Annotator, typ: Type[ByteList], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(ByteList, {'empty'})
+def empty_byte_list(ann: Annotator, typ: Type[ByteList], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+
+########################################################################################################################
+
+
+@type_edge_case(ByteVector, {'random'})
+def random_byte_vector(ann: Annotator, typ: Type[ByteVector], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(ByteVector, {'min', 'zero'})
+def zero_byte_vector(ann: Annotator, typ: Type[ByteVector], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(ByteVector, {'max'})
+def max_byte_vector(ann: Annotator, typ: Type[ByteVector], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+
+########################################################################################################################
+
+
+@type_edge_case(boolean, {'random'})
+def random_boolean(ann: Annotator, typ: Type[boolean], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    if rng.choice((True, False)):
+        return b"\x01"
+    else:
+        return b"\x00"
+
+@type_edge_case(boolean, {'min', 'zero'})
+def false_boolean(ann: Annotator, typ: Type[boolean], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    return b"\x00"
+
+@type_edge_case(boolean, {'max', 'one'})
+def true_boolean(ann: Annotator, typ: Type[boolean], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    return b"\x01"
+
+@type_edge_case(boolean, {'abs_max'})
+def abs_max_boolean(ann: Annotator, typ: Type[boolean], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    return b"\xff"
+
+@type_edge_case(boolean, {'any_random'})
+def any_byte_boolean(ann: Annotator, typ: Type[boolean], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    return rng.randrange(0, 256).to_bytes(length=1, byteorder='little')
+
+
+########################################################################################################################
+
+
+@type_edge_case(uint, {'random'})
+def random_uint(ann: Annotator, typ: Type[uint], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    return rng.randrange(0, 256**(typ.type_byte_length())).to_bytes(length=typ.type_byte_length(), byteorder='little')
+
+@type_edge_case(uint, {'min', 'zero'})
+def zero_uint(ann: Annotator, typ: Type[uint], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    return b"\x00" * typ.type_byte_length()
+
+@type_edge_case(uint, {'one'})
+def one_uint(ann: Annotator, typ: Type[uint], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    return (1).to_bytes(length=typ.type_byte_length(), byteorder='little')
+
+@type_edge_case(uint, {'max', 'abs_max'})
+def max_uint(ann: Annotator, typ: Type[uint], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    return b"\xff" * typ.type_byte_length()
+
+@type_edge_case(uint, {'endian'})
+def wrong_endian_uint(ann: Annotator, typ: Type[uint], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    # Bias bytes towards wrong half of the uint bytes, for lots of starting zeroes and high set bits.
+    return rng.randrange(0, 2**(8*typ.type_byte_length()//2)).to_bytes(length=typ.type_byte_length(), byteorder='big')
+
+
+# TODO: extra 0 padding bytes
+
+
+########################################################################################################################
+
+
+@type_edge_case(Bitlist, {'random'})
+def random_bitlist(ann: Annotator, typ: Type[Bitlist], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(Bitlist, {'min', 'zero'})
+def zero_bitlist(ann: Annotator, typ: Type[Bitlist], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(Bitlist, {'max'})
+def max_bitlist(ann: Annotator, typ: Type[Bitlist], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(Bitlist, {'full'})
+def full_bitlist(ann: Annotator, typ: Type[Bitlist], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(Bitlist, {'empty'})
+def empty_bitlist(ann: Annotator, typ: Type[Bitlist], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+
+@type_edge_case(Bitlist, {'limit'})
+def bitlist_exceed_limit_closely(ann: Annotator, typ: Type[Bitlist], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    limit = typ.limit()
+    # Excludes the last byte that has the delimit bit.
+    # bitlimit(3) -> 0 bytes
+    # bitlimit(7) -> 0 bytes (delimit bit is last bit in first byte)
+    # bitlimit(8) -> 1 byte (delimit bit is in second byte)
+    # bitlimit(9) -> 1 byte (delimit bit is in second byte still)
+    start_byte_len = limit // 8
+    start_bytes = ee(ann, ByteVector[start_byte_len], rng, ee)
+    min_bad_delimit_bit_pos = (limit % 8) + 1
+    last_byte = (1 << rng.randrange(min_bad_delimit_bit_pos, 8)).to_bytes(length=1, byteorder='little')
+    return start_bytes + last_byte
+
+
+# TODO: exceed bitlist length in byte count
+
+
+########################################################################################################################
+
+
+@type_edge_case(Bitvector, {'random'})
+def random_bitvector(ann: Annotator, typ: Type[Bitvector], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(Bitvector, {'min', 'zero'})
+def zero_bitvector(ann: Annotator, typ: Type[Bitvector], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(Bitvector, {'max'})
+def max_bitvector(ann: Annotator, typ: Type[Bitvector], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+# TODO: exceed bitvector length
+
+########################################################################################################################
+
+
+
+@type_edge_case(List, {'random'})
+def random_list(ann: Annotator, typ: Type[List], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(List, {'min', 'zero'})
+def zero_list(ann: Annotator, typ: Type[List], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(List, {'max'})
+def max_list(ann: Annotator, typ: Type[List], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(List, {'full'})
+def full_list(ann: Annotator, typ: Type[List], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(List, {'empty'})
+def empty_list(ann: Annotator, typ: Type[List], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+
+# TODO: exceed list length
+
+
+########################################################################################################################
+
+
+@type_edge_case(Vector, {'random'})
+def random_vector(ann: Annotator, typ: Type[Vector], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(Vector, {'min', 'zero'})
+def zero_vector(ann: Annotator, typ: Type[Vector], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+@type_edge_case(Vector, {'max'})
+def max_vector(ann: Annotator, typ: Type[Vector], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
+
+
+# TODO: exceed vector length
+
+
+########################################################################################################################
+
+
+@type_edge_case(Container, {'random'})
+def random_container(ann: Annotator, typ: Type[Container], rng: Random, ee: EdgeCaseEncoder) -> bytes:
+    length = 0
+    return b""  # TODO
 
 
 @type_edge_case(Container, {'offsets', 'scramble'})
@@ -121,21 +353,6 @@ def scrambled_var_fields(ann: Annotator, typ: Type[Container], rng: Random, ee: 
             out += fields_data[i]
     out += b"".join(dyn_field_datas)
     return out
-
-
-@type_edge_case(Bitlist, {'limit'})
-def bitlist_exceed_limit_closely(ann: Annotator, typ: Type[Bitlist], rng: Random, ee: EdgeCaseEncoder) -> bytes:
-    limit = typ.limit()
-    # Excludes the last byte that has the delimit bit.
-    # bitlimit(3) -> 0 bytes
-    # bitlimit(7) -> 0 bytes (delimit bit is last bit in first byte)
-    # bitlimit(8) -> 1 byte (delimit bit is in second byte)
-    # bitlimit(9) -> 1 byte (delimit bit is in second byte still)
-    start_byte_len = limit // 8
-    start_bytes = ee(ann, ByteVector[start_byte_len], rng, ee)
-    min_bad_delimit_bit_pos = (limit % 8) + 1
-    last_byte = (1 << rng.randrange(min_bad_delimit_bit_pos, 8)).to_bytes(length=1, byteorder='little')
-    return start_bytes + last_byte
 
 
 def build_edge_cases(typ: Type[View], random_count: int):
